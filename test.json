@@ -1,0 +1,34 @@
+{
+    "Records": [
+        {
+            "messageId": "396fd217-43d2-4bd3-8110-2c96315587a7",
+            "receiptHandle": "AQEBmnJ7Fvk45ZMReAfJyLTFbNO2ROgRhbrTr7Jxl6WmnNLsqkF3Es38UNzZKDLdoajf3649HaBWgQMFZ4M9trGvaJHbW64TW8aqXvrZ1W1Dg5QAVt2ynKBnDT0cniWE4Ll0GyROaVupV/KEpnFIdoXs2+zK1O7QO2OilRPd8nih26XnU/aIZtQZ81YRxF7695g/CaBKqO0bICKv+OGE++U6rU+E9GOaZEadEiilTedgAjBItD+fI5b25dYABg8asqq7moT/xlASLcawuH2X3Vx6+JXhU4EwfogB32frFiuZ2H7MB1kdWTXVHmUdc4Fw4K1LC6Zz56iyyk7rOl9RjQ8SoSkhLUfAVIeSVDYZXRB6NeMt0YbHmYMFGTDS+ZiZR9un",
+            "body": "creation",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1632925158780",
+                "SenderId": "AROAR2V6ROQCPKIN3VZH2:tester",
+                "ApproximateFirstReceiveTimestamp": "1632925158793"
+            },
+            "messageAttributes": {
+                "Name": {
+                    "stringValue": "Doe",
+                    "stringListValues": [],
+                    "binaryListValues": [],
+                    "dataType": "String"
+                },
+                "Firstname": {
+                    "stringValue": "Jude",
+                    "stringListValues": [],
+                    "binaryListValues": [],
+                    "dataType": "String"
+                }
+            },
+            "md5OfMessageAttributes": "3551e46493d2a05f1f496b9a6d34c795",
+            "md5OfBody": "8dfd8ac0990c9d9f3e2c7f833121aaef",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:eu-west-1:999999999999:MySampleQueue",
+            "awsRegion": "eu-west-1"
+        }
+    ]
+}

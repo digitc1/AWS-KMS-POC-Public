@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+#   --------------------------------------------------------
+#   Version History
+#
+#   v1.0  L. Leonard   Initial Version
+#   --------------------------------------------------------
+
+Description: >-
+  v1.0. Create an encrypted DynamoDB table
+
+Resources: 
+  rPersonTable: 
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "Name"
+          AttributeType: "S"
+        - 
+          AttributeName: "Firstname"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "Name"
+          KeyType: "HASH"
+        - 
+          AttributeName: "Firstname"
+          KeyType: "RANGE"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      TableName: "Person"
+      SSESpecification:
+        KMSMasterKeyId: !ImportValue kms-poc-dynamodb-key
+        SSEEnabled: "true"
+        SSEType: "KMS"

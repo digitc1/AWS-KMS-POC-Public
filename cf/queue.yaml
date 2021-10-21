@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: custom lookup function
+Resources:
+  rMySqsQueue:
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: "MySampleQueue"
+      KmsMasterKeyId: !ImportValue kms-poc-sqs-key
+      VisibilityTimeout: 120
+  rSampleSQSPolicy: 
+    Type: AWS::SQS::QueuePolicy
+    Properties: 
+      Queues: 
+        - !Sub "https://sqs:eu-west-1.amazonaws.com/${AWS::AccountId}/MySampleQueue"
+      PolicyDocument: 
+        Statement: 
+          - 
+            Action: 
+              - "SQS:SendMessage" 
+              - "SQS:ReceiveMessage"
+            Effect: "Allow"
+            Resource:  !Sub "arn:aws:sqs:eu-west-1:${AWS::AccountId}:MySampleQueue"
+            Principal:  
+              AWS: 
+                - !Sub "${AWS::AccountId}"
+Outputs:
+  LambdaArn:
+    Description: ARN of the Queue
+    Value: !GetAtt rMySqsQueue.Arn
+    Export:
+      Name: my-sqs-queue

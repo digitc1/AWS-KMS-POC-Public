@@ -1,0 +1,192 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+#   --------------------------------------------------------
+#   Version History
+#
+#   v1.0  L. Leonard   Initial Version
+#   --------------------------------------------------------
+
+Description: >-
+  v1.0. Create keys for DynamoDB and SQS
+  v1.1. add policy for allowing the access for the lambda role
+
+Parameters:
+  IAMUserId:
+    Type: String
+    Description: User id of the IAM user who should receive permissions
+
+Resources:
+  DynamoDBKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Key for the DynamoDB table person
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: !Ref AWS::StackName
+        Statement:
+          - 
+            Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              "AWS":  !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+          -
+            Sid: Allows admin of the key
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/KeyManagerRole/${IAMUserId}
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: Allow use of the key for CryptoGraphy Lambda
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/DBAccessRole/${IAMUserId}
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: "*"
+          -
+            Sid: Allow use of the key for deployment
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/DeployerRole/${IAMUserId}
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: Allow use of the key for CryptoGraphy Lambda
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:role/KMS-POC-MsgProcessor-role-${AWS::Region}
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: "*"
+  DynamoDBKMSAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/dynamoDBKey
+      TargetKeyId: !Ref DynamoDBKMSKey
+  SQSKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Key for the queue in SQS
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: !Ref AWS::StackName
+        Statement:
+          - 
+            Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              "AWS":  !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: 'kms:*'
+            Resource: '*'
+          -
+            Sid: Allows admin of the key
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/KeyManagerRole/${IAMUserId}
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: Allow use of the key for CryptoGraphy Lambda
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/SQSAccessRole/${IAMUserId}
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: "*"
+          -
+            Sid: Allow use of the key for deployment
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/DeployerRole/${IAMUserId}
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: Allow use of the key for CryptoGraphy Lambda
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:role/KMS-POC-MsgProcessor-role-${AWS::Region}
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: "*"
+  SQSKMSAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/sqsKey
+      TargetKeyId: !Ref SQSKMSKey
+
+Outputs:
+  DynamoDBKey:
+    Description: Key for DynamoDB
+    Value: !Sub ${DynamoDBKMSKey.Arn}
+    Export:
+      Name: kms-poc-dynamodb-key
+  SQSKey:
+    Description: Key for SQS
+    Value: !Sub ${SQSKMSKey.Arn}
+    Export:
+      Name: kms-poc-sqs-key

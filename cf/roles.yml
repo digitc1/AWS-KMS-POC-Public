@@ -1,0 +1,222 @@
+AWSTemplateFormatVersion : "2010-09-09"
+
+#   --------------------------------------------------------
+#   Version History
+#
+#   v1.0  L. Leonard   Initial Version
+#   --------------------------------------------------------
+
+Description: >-
+  v1.0. creation of the roles 
+
+Parameters:
+  SessionDurationInSec:
+    Type: Number
+    Default: 3600
+    # 5 minutes
+    MinValue: 300
+    # 12 hours
+    MaxValue: 43200
+    Description: Session maximum duration in seconds
+
+Resources:
+  rDeployerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/IAMFullAccess
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AWSCloudTrailReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+      MaxSessionDuration: !Ref SessionDurationInSec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: true
+      RoleName: DeployerRole
+      Path: "/"
+      Policies:
+        - PolicyName: DeployerPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+            - Effect: Allow
+              Action:
+                - "kms:Create*"
+                - "kms:Describe*"
+                - "kms:Enable*"
+                - "kms:List*"
+                - "kms:Put*"
+                - "kms:Update*"
+                - "kms:Revoke*"
+                - "kms:Disable*"
+                - "kms:Get*"
+                - "kms:Delete*"
+                - "kms:ScheduleKeyDeletion"
+                - "kms:CancelKeyDeletion"
+              Resource: "*"
+      Tags:
+        - Key: Created-in-stack
+          Value: !Sub '${AWS::StackId}'
+  rKeyManagerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      MaxSessionDuration: !Ref SessionDurationInSec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: true
+      RoleName: KeyManagerRole
+      Path: "/"
+      Policies:
+        - PolicyName: KeyManagerPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+            - Effect: Allow
+              Action:
+                - "kms:Create*"
+                - "kms:Describe*"
+                - "kms:Enable*"
+                - "kms:List*"
+                - "kms:Put*"
+                - "kms:Update*"
+                - "kms:Revoke*"
+                - "kms:Disable*"
+                - "kms:Get*"
+                - "kms:Delete*"
+                - "kms:ScheduleKeyDeletion"
+                - "kms:CancelKeyDeletion"
+              Resource: "*"
+      Tags:
+        - Key: Created-in-stack
+          Value: !Sub '${AWS::StackId}'
+  rDBAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+      MaxSessionDuration: !Ref SessionDurationInSec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: true
+      RoleName: DBAccessRole
+      Path: "/"
+      Tags:
+        - Key: Created-in-stack
+          Value: !Sub '${AWS::StackId}'
+  rDBAccessNotAllowedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+      MaxSessionDuration: !Ref SessionDurationInSec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: true
+      RoleName: DBAccessNotAllowedRole
+      Path: "/"
+      Tags:
+        - Key: Created-in-stack
+          Value: !Sub '${AWS::StackId}'
+  rSQSAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AWSCloudTrailReadOnlyAccess
+      MaxSessionDuration: !Ref SessionDurationInSec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: true
+      RoleName: SQSAccessRole
+      Path: "/"
+      Tags:
+        - Key: Created-in-stack
+          Value: !Sub '${AWS::StackId}'
+  rSQSAccessNotAllowedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AWSCloudTrailReadOnlyAccess
+      MaxSessionDuration: !Ref SessionDurationInSec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: true
+      RoleName: SQSAccessNotAllowedRole
+      Path: "/"
+      Tags:
+        - Key: Created-in-stack
+          Value: !Sub '${AWS::StackId}'  
+  rAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      MaxSessionDuration: !Ref SessionDurationInSec
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - sts:AssumeRole
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: true
+      RoleName: AdminRole
+      Path: "/"
+      Tags:
+        - Key: Created-in-stack
+          Value: !Sub '${AWS::StackId}'

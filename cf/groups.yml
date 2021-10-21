@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion : "2010-09-09"
+
+#   --------------------------------------------------------
+#   Version History
+#
+#   v1.0  L. Leonard   Initial Version
+#   --------------------------------------------------------
+
+Description: >-
+  v1.0. Creation of the groups that allows all roles to be assumed and allow the user to manage his creds.
+  
+Resources:
+  rAllUsersGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: AllUsers
+  rAssumeAllRolesGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: AssumeAllRoles
+      Policies: 
+        - PolicyName: AssumeAllRolesPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "sts:AssumeRole"
+                Resource: 
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/AdminRole"
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/SQSAccessNotAllowedRole"
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/SQSAccessRole"
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/DBAccessNotAllowedRole"
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/DBAccessRole"
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/DBAccessRole"
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/KeyManagerRole"
+                  - !Sub "arn:aws:iam::${AWS::AccountId}:role/DeployerRole"
+                Condition:
+                  Bool:
+                    aws:MultiFactorAuthPresent: true
+  rManageOwnCredentialsPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ManageOwnCredentialsPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - iam:ChangePassword
+          - iam:DeactivateMFADevice
+          - iam:EnableMFADevice
+          - iam:GetUser
+          - iam:ListMFADevices
+          - iam:ResyncMFADevice
+          - iam:ListAccessKeys
+          - iam:ListSSHPublicKeys
+          - iam:ListServiceSpecificCredentials
+          - iam:GetAccessKeyLastUsed
+          Resource: "arn:aws:iam::*:user/${aws:username}"
+        - Effect: Allow
+          Action:
+          - iam:CreateVirtualMFADevice
+          - iam:DeleteVirtualMFADevice
+          Resource: "arn:aws:iam::*:mfa/${aws:username}"
+        - Effect: Allow
+          Action:
+          - iam:GetAccountPasswordPolicy
+          - iam:GetAccountSummary
+          - iam:GetGroup
+          - iam:GetGroupPolicy
+          - iam:GetPolicy
+          - iam:GetPolicyVersion
+          - iam:GetRole
+          - iam:GetRolePolicy
+          - iam:GetLoginProfile
+          - iam:ListVirtualMFADevices
+          - iam:ListAccountAliases
+          - iam:ListGroupPolicies
+          - iam:ListGroups
+          - iam:ListGroupsForUser
+          - iam:ListPolicies
+          - iam:ListPolicyVersions
+          - iam:ListRolePolicies
+          - iam:ListRoleTags
+          - iam:ListRoles
+          - iam:ListUserPolicies
+          - iam:ListUserTags
+          - iam:ListUsers
+          - iam:ListAttachedGroupPolicies
+          - iam:ListAttachedRolePolicies
+          Resource: '*'
+      Groups:
+        - AllUsers
+      

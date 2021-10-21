@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+#   --------------------------------------------------------
+#   Version History
+#
+#   v1.0  L. Leonard   Initial Version
+#   --------------------------------------------------------
+
+Description: >-
+  v1.0. Lambda consuming message from SQS queue and storing a part of the message in DynamoDB table
+Resources:
+  rKMSPOCMsgProcessor:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: KMSPOCMsgProcessorLambda
+      Handler: index.handler
+      Runtime: python3.8
+      Description: Message processor function
+      Code:
+        ZipFile: |
+          from __future__ import print_function
+          import json
+          import boto3
+
+          tablename = 'Person'
+          
+          def handler(event, context):
+              print(str(event))
+              dynamodb = boto3.resource('dynamodb')
+              table = dynamodb.Table(tablename)
+              for record in event['Records']:
+                  action = record["body"]
+                  if action == 'creation' :
+                      table.put_item(
+                        Item={
+                              'Name': record["messageAttributes"]["Name"]["stringValue"],
+                              'Firstname': record["messageAttributes"]["Firstname"]["stringValue"]
+                          }
+                      )
+              dynamodbresponse = table.scan()
+              response=json.dumps(dynamodbresponse)
+              print(response)
+              return response
+      MemorySize: 128
+      Timeout: 60
+      TracingConfig:
+        Mode: Active
+      Role: !GetAtt rKMSPOCMsgProcessorLambdaRole.Arn
+  rKMSPOCMsgProcessorLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub KMS-POC-MsgProcessor-role-${AWS::Region}
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+  rKMSPOCMsgProcessorLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub KMS-POC-MsgProcessor-policy-${AWS::Region}
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - dynamodb:*
+            Resource:
+              - arn:aws:dynamodb:*:*:table/Person
+              - arn:aws:dynamodb:*:*:table/Person/*
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+      Roles:
+        -
+          !Ref rKMSPOCMsgProcessorLambdaRole
+  rMyEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !ImportValue my-sqs-queue
+      FunctionName:
+        Fn::GetAtt:
+          - "rKMSPOCMsgProcessor"
+          - "Arn"
+Outputs:
+  LambdaArn:
+    Description: ARN of the Lambda Function, which returns the mappings
+    Value: !GetAtt rKMSPOCMsgProcessor.Arn
+    Export:
+      Name: KMS-POC-MsgProcessor
