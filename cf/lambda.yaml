@@ -29,12 +29,13 @@ Resources:
               dynamodb = boto3.resource('dynamodb')
               table = dynamodb.Table(tablename)
               for record in event['Records']:
-                  action = record["body"]
+                  action = record["messageAttributes"]["Action"]["stringValue"]
                   if action == 'creation' :
+                      body = record["body"].split(",")
                       table.put_item(
                         Item={
-                              'Name': record["messageAttributes"]["Name"]["stringValue"],
-                              'Firstname': record["messageAttributes"]["Firstname"]["stringValue"]
+                              'Name': body[0],
+                              'Firstname': body[1]
                           }
                       )
               dynamodbresponse = table.scan()
@@ -45,60 +46,9 @@ Resources:
       Timeout: 60
       TracingConfig:
         Mode: Active
-      Role: !GetAtt rKMSPOCMsgProcessorLambdaRole.Arn
-  rKMSPOCMsgProcessorLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub KMS-POC-MsgProcessor-role-${AWS::Region}
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          -
-            Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-  rKMSPOCMsgProcessorLambdaPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: !Sub KMS-POC-MsgProcessor-policy-${AWS::Region}
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          -
-            Effect: Allow
-            Action:
-              - dynamodb:*
-            Resource:
-              - arn:aws:dynamodb:*:*:table/Person
-              - arn:aws:dynamodb:*:*:table/Person/*
-          -
-            Effect: Allow
-            Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource: arn:aws:logs:*:*:*
-      Roles:
-        -
-          !Ref rKMSPOCMsgProcessorLambdaRole
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/KMS-POC-MsgProcessor-role-eu-west-1
   rMyEventSourceMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       EventSourceArn: !ImportValue my-sqs-queue
-      FunctionName:
-        Fn::GetAtt:
-          - "rKMSPOCMsgProcessor"
-          - "Arn"
-Outputs:
-  LambdaArn:
-    Description: ARN of the Lambda Function, which returns the mappings
-    Value: !GetAtt rKMSPOCMsgProcessor.Arn
-    Export:
-      Name: KMS-POC-MsgProcessor
+      FunctionName: !GetAtt rKMSPOCMsgProcessor.Arn
