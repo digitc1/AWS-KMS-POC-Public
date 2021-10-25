@@ -4,7 +4,7 @@ The purpose of this exercise is to develop a quick implementation of a lambda re
 
 ## Before you begin
 
-With encryption at rest, DynamoDB transparently encrypts all customer data in a DynamoDB table, including its primary key and local and global secondary indexes, whenever the table is persisted to disk. (If your table has a sort key, some of the sort keys that mark range boundaries are stored in plaintext in the table metadata.) When you access your table, DynamoDB decrypts the table data transparently. You do not need to change your applications to use or manage encrypted tables.
+With encryption at rest, DynamoDB transparently encrypts all customer data in a DynamoDB table, including its primary key and local and global secondary indexes, whenever the table is persisted to disk. (If your table has a sort key, some of the sort keys are stored in plaintext in the table metadata.) When you access your table, DynamoDB decrypts the table data transparently. You do not need to change your applications to use or manage encrypted tables.
 
 Encryption at rest also protects DynamoDB streams, global tables, and backups whenever these objects are saved to durable media.
 
@@ -46,15 +46,15 @@ First, we deploy the following roles :
 * AdminRole - Full admin permission
 * DeployerRole - Full admin permission
 * DBAccessRole - Amazon DynamoDB Full Access
-* DBAccessNotAllowedRole - Amazon DynamoDB Full Access
+* DBAccessNotAllowedRole - Amazon DynamoDB Full Access (but not present in the key policy)
 * SQSAccessRole - Amazon SQS Full Access and AWS CloudTrail ReadOnly Access
-* SQSAccessNotAllowedRole - Amazon SQS Full Access and AWS CloudTrail ReadOnly Access
-* KeyManagerRole - AWS KMS Admin 
+* SQSAccessNotAllowedRole - Amazon SQS Full Access and AWS CloudTrail ReadOnly Access (but not present in the key policy)
+* KeyManagerRole - AWS KMS Admin (for all keys)
 * KMS-POC-MsgProcessor-role - Amazon SQS Read message, Access DynamoDB Table, Write logs permission
 
 Then we deploy :
 * AllUsers : a group to give directly the permissions to the user to manage its credentials
-* AssumeAllRoles : a group to allow a member of the group to assume the different roles if MFA token is present (The members do not receive directly admin rights, they have to assume it)
+* AssumeAllRoles : a group to allow its members to assume the different roles if MFA token is present (The members do not receive directly admin rights, they have to assume AdminRole)
 
 To deploy the ressources, you can run the following AWS CLI commands or you can deploy it via the console
 ```
@@ -86,7 +86,7 @@ region = eu-west-1
 
 ## KMS, SQS, Lambda and DynamoDB with CMK encryption at rest
 
-We implement the solution using Customer managed key (CMK) in AWS KMS to be completelly in control of the keys.
+We implement the solution using Customer managed key (CMK) in AWS KMS to be completely in control of the keys.
 
 As we need to make reference to the keys when creating some resources, we have to create the keys first : one for SQS and one for DynamoDB. The producer of data could be different from the consumer in term of permissions.
 The keys need
