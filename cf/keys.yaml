@@ -8,6 +8,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 
 Description: >-
   v1.0. Create keys for DynamoDB and SQS
+  v1.1. add policy for allowing the access for the lambda role
 
 Parameters:
   IAMUserId:
@@ -24,15 +25,7 @@ Resources:
         Version: "2012-10-17"
         Id: !Ref AWS::StackName
         Statement:
-          - 
-            Sid: Enable IAM User Permissions
-            Effect: Allow
-            Principal:
-              "AWS":  !Sub arn:aws:iam::${AWS::AccountId}:root
-            Action: 'kms:*'
-            Resource: '*'
-          -
-            Sid: Allows admin of the key
+          - Sid: Allows admin of the key
             Effect: Allow
             Principal:
               "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/KeyManagerRole/${IAMUserId}
@@ -49,28 +42,10 @@ Resources:
               - "kms:Delete*"
               - "kms:ScheduleKeyDeletion"
               - "kms:CancelKeyDeletion"
+              - "kms:TagResource"
+              - "kms:UntagResource"
             Resource: "*"
-          -
-            Sid: Allows admin of the key
-            Effect: Allow
-            Principal:
-              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/KeyManagerRole/${IAMUserId}
-            Action:
-              - "kms:Create*"
-              - "kms:Describe*"
-              - "kms:Enable*"
-              - "kms:List*"
-              - "kms:Put*"
-              - "kms:Update*"
-              - "kms:Revoke*"
-              - "kms:Disable*"
-              - "kms:Get*"
-              - "kms:Delete*"
-              - "kms:ScheduleKeyDeletion"
-              - "kms:CancelKeyDeletion"
-            Resource: "*"
-          -
-            Sid: Allow use of the key for CryptoGraphy Lambda
+          - Sid: Allow use of the key for CryptoGraphy Lambda
             Effect: Allow
             Principal:
               "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/DBAccessRole/${IAMUserId}
@@ -81,8 +56,7 @@ Resources:
               - kms:GenerateDataKey*
               - kms:DescribeKey
             Resource: "*"
-          -
-            Sid: Allow use of the key for deployment
+          - Sid: Allow use of the key for deployment
             Effect: Allow
             Principal:
               "AWS": !Sub arn:aws:iam::${AWS::AccountId}:assumed-role/DeployerRole/${IAMUserId}
@@ -99,7 +73,21 @@ Resources:
               - "kms:Delete*"
               - "kms:ScheduleKeyDeletion"
               - "kms:CancelKeyDeletion"
+              - "kms:TagResource"
+              - "kms:UntagResource"
             Resource: "*"
+          - Sid: Allow use of the key for CryptoGraphy Lambda
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:role/KMS-POC-MsgProcessor-role-${AWS::Region}
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: "*"
+      Tags:
+      - Key: Created-in-stack
+        Value: !Sub '${AWS::StackId}'
   DynamoDBKMSAlias:
     Type: AWS::KMS::Alias
     Properties:
@@ -171,6 +159,19 @@ Resources:
               - "kms:ScheduleKeyDeletion"
               - "kms:CancelKeyDeletion"
             Resource: "*"
+          -
+            Sid: Allow use of the key for CryptoGraphy Lambda
+            Effect: Allow
+            Principal:
+              "AWS": !Sub arn:aws:iam::${AWS::AccountId}:role/KMS-POC-MsgProcessor-role-${AWS::Region}
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: "*"
+      Tags:
+      - Key: Created-in-stack
+        Value: !Sub '${AWS::StackId}'
   SQSKMSAlias:
     Type: AWS::KMS::Alias
     Properties:

@@ -64,6 +64,8 @@ Resources:
                 - "kms:Delete*"
                 - "kms:ScheduleKeyDeletion"
                 - "kms:CancelKeyDeletion"
+                - "kms:TagResource"
+                - "kms:UntagResource"
               Resource: "*"
       Tags:
         - Key: Created-in-stack
@@ -104,6 +106,8 @@ Resources:
                 - "kms:Delete*"
                 - "kms:ScheduleKeyDeletion"
                 - "kms:CancelKeyDeletion"
+                - "kms:TagResource"
+                - "kms:UntagResource"
               Resource: "*"
       Tags:
         - Key: Created-in-stack
@@ -220,3 +224,47 @@ Resources:
       Tags:
         - Key: Created-in-stack
           Value: !Sub '${AWS::StackId}'
+  rKMSPOCMsgProcessorLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub KMS-POC-MsgProcessor-role-${AWS::Region}
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Tags:
+        - Key: Created-in-stack
+          Value: !Sub '${AWS::StackId}'
+  rKMSPOCMsgProcessorLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: KMS-POC-MsgProcessor-policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - dynamodb:*
+            Resource:
+              - arn:aws:dynamodb:*:*:table/Person
+              - arn:aws:dynamodb:*:*:table/Person/*
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+      Roles:
+        - !Sub KMS-POC-MsgProcessor-role-${AWS::Region}

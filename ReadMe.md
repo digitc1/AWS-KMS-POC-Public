@@ -50,6 +50,7 @@ First, we deploy the following roles :
 * SQSAccessRole - Amazon SQS Full Access and AWS CloudTrail ReadOnly Access
 * SQSAccessNotAllowedRole - Amazon SQS Full Access and AWS CloudTrail ReadOnly Access
 * KeyManagerRole - AWS KMS Admin 
+* KMS-POC-MsgProcessor-role - Amazon SQS Read message, Access DynamoDB Table, Write logs permission
 
 Then we deploy :
 * AllUsers : a group to give directly the permissions to the user to manage its credentials
@@ -83,12 +84,21 @@ region = eu-west-1
 ```
 999999999999 is your account id.
 
-## SQS, Lambda and DynamoDB with CMK encryption at rest
+## KMS, SQS, Lambda and DynamoDB with CMK encryption at rest
 
-We implemet the solution using Customer managed key (CMK) in AWS KMS.
-We want to create 2 keys : one for SQS and one for DynamoDB. The producer of data is different from the consumer.
-For the DynamoDB table, we have to create a new table and give the specifications for the Server-Side Encryption for a DB dedicated key.
-For the CMK encryption, we need to create a KMS symetric key.
+We implement the solution using Customer managed key (CMK) in AWS KMS to be completelly in control of the keys.
+
+As we need to make reference to the keys when creating some resources, we have to create the keys first : one for SQS and one for DynamoDB. The producer of data could be different from the consumer in term of permissions.
+The keys need
+- to be managed by the created user assuming the role KeyManagerRole.
+- to be used by the created user assuming their dedicated roles (DBAccessRole and SQSAccessRole)
+- to be managed by the created user assuming the role DeployerRole.
+
+For the DynamoDB table, we have to create a new table and add the specifications for the Server-Side Encryption with the DynamoDB dedicated key.
+
+For the SQS, we need to define the _KmsMasterKeyId_ with the SQS dedicated key.
+
+For the lambda, we have to attach the SQS event to it.
 
 To deploy the ressources you can run the following commands in this order or via the console
 ```
@@ -101,32 +111,11 @@ $ aws cloudformation deploy --template-file ./cf/lambda.yaml --stack-name KMS-PO
 #### Observations
 - When looking at the table in the DynamoDB service in the console,
 we see that encryption is based on the KMS key we just created.
-This is CMK encryption type. The key is stored in your account and is created, owned, and managed by you. You have full control over the KMS key.
-- We can go directly to the Items and add some entries without issues.
-
-#### What we have to do to make it work
-- in the key policy, allow the lambda to decrypt with the key for reading the table.
-- in the key policy, allow a user to encrypt/decrypt for inserting items and reading them in the console.
-- in the key policy, allow all principals from the account with the necessary permissions (role/policy) to administer the key.
+This is CMK encryption type. The key is stored in the account and is created, owned, and managed by the user. You have full control over the KMS key.
+- If we assume the role DBAccessRole with the user johndoe, we can go directly to the items of the table, see the items and add some entries without issues. This is because the role has the permission to use the key for encryption.
+- If we assume the role DBAccessNotAllowedRole with the user johndoe and we try to read the items of the table, we cannot see them and we cannot create new item. This is because the role is missing the permission to use the key.
 
 #### What should be improved to be production ready
 - The permission for the administration of the key is too lax
     - creating a specific role to admin the keys in the account and a group in our authentication account to assume that role
 - We should block the possibility to use the role in another lamba (it's the role that has the permission to decrypt)
-
-### Lambda, DynamoDB and SQS Queue with CMK encryption at rest
-
-You can find this implementation in the directory ReadFromQueueWithEncryption.
-At the level of the Lambda, we add the code for reading the records from the queue, the permission to acces the queue and a trigger for the lambda based on the event on the queue.
-For the queue it-self, we have to create an SQS Queue with a reference to the KMS Key.
-
-To deploy the ressources you can run the following commands in this order or via the console (it replaces the previous version of the lambda)
-```
-$ aws cloudformation deploy --template-file ./ReadFromQueueWithEncryption/lambda.yaml --stack-name KMS-POC-Lambda --capabilities CAPABILITY_NAMED_IAM
-$ aws cloudformation deploy --template-file ./ReadFromQueueWithEncryption/queue.yaml --stack-name KMS-POC-Queue --capabilities CAPABILITY_NAMED_IAM
-```
-Remark : the parameter --profile YOUR_PROFILE could be used
-
-#### Remarks
-- We have used the same KMS key for the encryption of the dynamoDB table and the SQS Queue, depending on the requirement this, we could have to create another KMS Key dedicated to SQS Queue.
-- The producers of the messages in the Queue could be different from the consumers, this has to be managed at the level of the policy of the SQS Queue and at the level of the KMS Key policy.
