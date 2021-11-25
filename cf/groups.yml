@@ -92,4 +92,5 @@ Resources:
           Resource: '*'
       Groups:
         - AllUsers
+    DependsOn: rAllUsersGroup
       

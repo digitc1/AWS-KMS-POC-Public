@@ -268,3 +268,4 @@ Resources:
             Resource: arn:aws:logs:*:*:*
       Roles:
         - !Sub KMS-POC-MsgProcessor-role-${AWS::Region}
+    DependsOn: rKMSPOCMsgProcessorLambdaRole

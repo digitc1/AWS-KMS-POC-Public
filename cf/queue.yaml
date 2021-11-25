@@ -23,6 +23,7 @@ Resources:
             Principal:  
               AWS: 
                 - !Sub "${AWS::AccountId}"
+    DependsOn: rMySqsQueue
 Outputs:
   LambdaArn:
     Description: ARN of the Queue
