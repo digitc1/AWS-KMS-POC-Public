@@ -58,8 +58,8 @@ Then we deploy :
 
 To deploy the ressources, you can run the following AWS CLI commands or you can deploy it via the console
 ```
-$ aws cloudformation deploy --template-file ./cf/roles.yaml --stack-name KMS-POC-Roles --capabilities CAPABILITY_NAMED_IAM
-$ aws cloudformation deploy --template-file ./cf/groups.yaml --stack-name KMS-POC-Groups --capabilities CAPABILITY_NAMED_IAM
+$ aws cloudformation deploy --template-file ./cf/roles.yml --stack-name KMS-POC-Roles --capabilities CAPABILITY_NAMED_IAM
+$ aws cloudformation deploy --template-file ./cf/groups.yml --stack-name KMS-POC-Groups --capabilities CAPABILITY_NAMED_IAM
 ```
 Remark : the parameter --profile WHATEVER_PROFILE could be used
 
