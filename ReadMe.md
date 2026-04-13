@@ -1,3 +1,12 @@
+# ⚠️ **This Repository is Archived**
+
+> **Notice:** This project is no longer actively maintained.
+> While the code remains available for reference, no further updates, bug fixes, or security patches will be provided.
+>
+> If you'd like to take over maintenance or fork this project, please [open servicenow ticket](https://digit.service-now.com/esc?id=sc_cat_item&sys_id=bf8f9b791bcfb1d8bd075465604bcbaf) to discuss.
+
+---
+
 # AWS-KMS-POC - Proof of Concept on KMS
 
 The purpose of this exercise is to develop a quick implementation of a lambda reading data from an encrypted queue (SQS) and write the content of the message in a table of an encrypted database (DynamoDB) with a Customer Managed Key (in KMS)
